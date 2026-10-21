@@ -1,0 +1,246 @@
+:root {
+  --bg: #ffffff;
+  --surface: #f3f4f6;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --danger: #dc2626;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #18181b;
+    --surface: #27272a;
+    --border: #3f3f46;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --danger: #f87171;
+  }
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+body {
+  width: 380px;
+  margin: 0;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+button { font: inherit; cursor: pointer; }
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+h1 { margin: 0; font-size: 17px; }
+
+.today {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.today::first-letter { text-transform: uppercase; }
+
+.progress-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.progress {
+  height: 4px;
+  margin: 10px 0 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.progress-bar {
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 200ms ease;
+}
+
+.new-todo { display: flex; gap: 8px; }
+
+.new-todo input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.new-todo input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.button-primary {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.button-primary:hover { background: var(--accent-hover); }
+
+.button-pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.button-pick:hover { border-color: var(--accent); color: var(--accent); }
+
+.error {
+  margin: 8px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.todo-list {
+  max-height: 380px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.todo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.todo:last-child { border-bottom: 0; }
+
+.todo.dragging { opacity: 0.4; }
+
+.todo-handle {
+  flex: none;
+  display: flex;
+  margin: 2px -4px 0 -2px;
+  color: var(--muted);
+  fill: currentColor;
+  cursor: grab;
+  opacity: 0;
+}
+
+.todo:hover .todo-handle { opacity: 0.7; }
+
+.todo-handle:active { cursor: grabbing; }
+
+.todo-check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.todo-body { flex: 1; min-width: 0; }
+
+.todo-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.todo-text[contenteditable] {
+  display: block;
+  padding: 0 4px;
+  margin: 0 -4px;
+  border-radius: 4px;
+  outline: 2px solid var(--accent);
+}
+
+.todo.done .todo-text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.todo-source {
+  display: inline-block;
+  max-width: 100%;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.todo-source:hover { color: var(--accent); text-decoration: underline; }
+
+.todo-delete {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0;
+}
+
+.todo:hover .todo-delete,
+.todo-delete:focus-visible { opacity: 1; }
+
+.todo-delete:hover { background: var(--surface); color: var(--danger); }
+
+.empty {
+  margin: 20px 0 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.button-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.button-link:hover { color: var(--danger); }

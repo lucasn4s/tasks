@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Afazeres do dia",
+  "version": "1.0.0",
+  "description": "Lista de tarefas do dia: adicione por texto ou apontando um elemento da página.",
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Afazeres do dia",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+T" },
+      "description": "Abrir a lista de afazeres"
+    },
+    "pick-element": {
+      "suggested_key": { "default": "Alt+Shift+E" },
+      "description": "Selecionar um elemento da página para virar tarefa"
+    }
+  }
+}

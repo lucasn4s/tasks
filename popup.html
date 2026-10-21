@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Afazeres do dia</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="header">
+    <div>
+      <h1>Afazeres do dia</h1>
+      <p id="today" class="today"></p>
+    </div>
+    <span id="progress-label" class="progress-label"></span>
+  </header>
+  <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+
+  <form id="new-todo-form" class="new-todo">
+    <input id="new-todo-text" type="text" placeholder="O que precisa ser feito?" autocomplete="off" autofocus>
+    <button type="submit" class="button-primary">Adicionar</button>
+  </form>
+  <button id="pick-element" type="button" class="button-pick">
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    Selecionar elemento na página
+  </button>
+  <p id="error-message" class="error" hidden></p>
+
+  <ul id="todo-list" class="todo-list"></ul>
+  <p id="empty-state" class="empty" hidden>Nada por aqui ainda. Bora planejar o dia ☕</p>
+
+  <footer id="footer" class="footer" hidden>
+    <button id="clear-completed" type="button" class="button-link">Limpar concluídas</button>
+  </footer>
+
+  <template id="todo-item-template">
+    <li class="todo">
+      <span class="todo-handle" draggable="true" title="Arraste para reordenar">
+        <svg viewBox="0 0 10 16" width="10" height="16" aria-hidden="true">
+          <circle cx="2.5" cy="3" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/>
+          <circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/>
+          <circle cx="2.5" cy="13" r="1.5"/><circle cx="7.5" cy="13" r="1.5"/>
+        </svg>
+      </span>
+      <input type="checkbox" class="todo-check" aria-label="Concluir tarefa">
+      <div class="todo-body">
+        <span class="todo-text" title="Clique duas vezes para editar"></span>
+        <a class="todo-source" target="_blank" rel="noopener" hidden></a>
+      </div>
+      <button type="button" class="todo-delete" title="Excluir" aria-label="Excluir tarefa">×</button>
+    </li>
+  </template>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
