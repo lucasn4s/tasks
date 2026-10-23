@@ -1,18 +1,22 @@
-const STORAGE_KEY = 'todos';
+const TODOS_KEY = 'todos';
+const TAGS_KEY = 'tags';
 
 let pendingWrite = Promise.resolve();
 
-export async function loadTodos() {
-  const { [STORAGE_KEY]: todos = [] } = await chrome.storage.local.get(STORAGE_KEY);
-  return todos;
+export function loadTodos() {
+  return loadList(TODOS_KEY);
+}
+
+export function loadTags() {
+  return loadList(TAGS_KEY);
 }
 
 export function onTodosChanged(callback) {
-  chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes[STORAGE_KEY]) {
-      callback(changes[STORAGE_KEY].newValue ?? []);
-    }
-  });
+  onListChanged(TODOS_KEY, callback);
+}
+
+export function onTagsChanged(callback) {
+  onListChanged(TAGS_KEY, callback);
 }
 
 export function addTodo(text, source = null) {
@@ -23,6 +27,7 @@ export function addTodo(text, source = null) {
     createdAt: Date.now(),
     completedAt: null,
     source,
+    tagIds: [],
   };
   return modifyTodos((todos) => [...todos, todo]);
 }
@@ -33,6 +38,12 @@ export function setTodoDone(id, done) {
 
 export function renameTodo(id, text) {
   return modifyTodo(id, { text });
+}
+
+export function toggleTodoTag(id, tagId) {
+  return modifyTodos((todos) => todos.map((todo) => (
+    todo.id === id ? { ...todo, tagIds: toggleItem(todo.tagIds ?? [], tagId) } : todo
+  )));
 }
 
 export function removeTodo(id) {
@@ -53,14 +64,51 @@ export function reorderTodos(orderedIds) {
   return modifyTodos((todos) => [...todos].sort((a, b) => positionOf(a) - positionOf(b)));
 }
 
+export function createTag(name, color) {
+  const tag = { id: crypto.randomUUID(), name, color };
+  return modifyLists(({ tags }) => ({ tags: [...tags, tag] }));
+}
+
+export function updateTag(id, changes) {
+  return modifyLists(({ tags }) => ({ tags: tags.map((tag) => (tag.id === id ? { ...tag, ...changes } : tag)) }));
+}
+
+export function removeTag(id) {
+  return modifyLists(({ todos, tags }) => ({
+    tags: tags.filter((tag) => tag.id !== id),
+    todos: todos.map((todo) => ({ ...todo, tagIds: (todo.tagIds ?? []).filter((tagId) => tagId !== id) })),
+  }));
+}
+
+async function loadList(key) {
+  const { [key]: list = [] } = await chrome.storage.local.get(key);
+  return list;
+}
+
+function onListChanged(key, callback) {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes[key]) {
+      callback(changes[key].newValue ?? []);
+    }
+  });
+}
+
 function modifyTodo(id, changes) {
   return modifyTodos((todos) => todos.map((todo) => (todo.id === id ? { ...todo, ...changes } : todo)));
 }
 
+function toggleItem(list, item) {
+  return list.includes(item) ? list.filter((other) => other !== item) : [...list, item];
+}
+
 function modifyTodos(transform) {
+  return modifyLists(({ todos }) => ({ todos: transform(todos) }));
+}
+
+function modifyLists(transform) {
   const write = pendingWrite.then(async () => {
-    const todos = await loadTodos();
-    await chrome.storage.local.set({ [STORAGE_KEY]: transform(todos) });
+    const { [TODOS_KEY]: todos = [], [TAGS_KEY]: tags = [] } = await chrome.storage.local.get([TODOS_KEY, TAGS_KEY]);
+    await chrome.storage.local.set(transform({ todos, tags }));
   });
   pendingWrite = write.catch(() => {});
   return write;

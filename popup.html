@@ -6,34 +6,65 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <header class="header">
-    <div>
-      <h1>Afazeres do dia</h1>
-      <p id="today" class="today"></p>
-    </div>
-    <span id="progress-label" class="progress-label"></span>
-  </header>
-  <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+  <main id="todos-view">
+    <header class="header">
+      <div>
+        <h1>Afazeres do dia</h1>
+        <p id="today" class="today"></p>
+      </div>
+      <span id="progress-label" class="progress-label"></span>
+    </header>
+    <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
 
-  <form id="new-todo-form" class="new-todo">
-    <input id="new-todo-text" type="text" placeholder="O que precisa ser feito?" autocomplete="off" autofocus>
-    <button type="submit" class="button-primary">Adicionar</button>
-  </form>
-  <button id="pick-element" type="button" class="button-pick">
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-      <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
-      <path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    Selecionar elemento na página
-  </button>
-  <p id="error-message" class="error" hidden></p>
+    <form id="new-todo-form" class="new-todo">
+      <input id="new-todo-text" type="text" placeholder="O que precisa ser feito?" autocomplete="off" autofocus>
+      <button type="submit" class="button-primary">Adicionar</button>
+    </form>
+    <button id="pick-element" type="button" class="button-pick">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+        <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Selecionar elemento na página
+    </button>
+    <p id="error-message" class="error" hidden></p>
 
-  <ul id="todo-list" class="todo-list"></ul>
-  <p id="empty-state" class="empty" hidden>Nada por aqui ainda. Bora planejar o dia ☕</p>
+    <ul id="todo-list" class="todo-list"></ul>
+    <p id="empty-state" class="empty" hidden>Nada por aqui ainda. Bora planejar o dia ☕</p>
 
-  <footer id="footer" class="footer" hidden>
-    <button id="clear-completed" type="button" class="button-link">Limpar concluídas</button>
-  </footer>
+    <footer class="footer">
+      <button id="open-tags" type="button" class="button-link">
+        <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><use href="#icon-tag"/></svg>
+        Gerenciar tags
+      </button>
+      <button id="clear-completed" type="button" class="button-link button-link-danger" hidden>Limpar concluídas</button>
+    </footer>
+  </main>
+
+  <section id="tags-view" hidden>
+    <header class="view-header">
+      <button id="close-tags" type="button" class="button-back" aria-label="Voltar para os afazeres">←</button>
+      <h1>Tags</h1>
+    </header>
+    <form id="tag-form" class="tag-form">
+      <div class="tag-form-row">
+        <input id="tag-name" type="text" placeholder="Nome da tag" maxlength="24" autocomplete="off" aria-label="Nome da tag">
+        <button id="tag-submit" type="submit" class="button-primary">Criar</button>
+      </div>
+      <div id="tag-colors" class="tag-colors" role="radiogroup" aria-label="Cor da tag"></div>
+      <p id="tag-error" class="error" hidden></p>
+      <button id="cancel-tag-edit" type="button" class="button-link" hidden>Cancelar edição</button>
+    </form>
+    <ul id="tag-list" class="tag-list"></ul>
+    <p id="tags-empty" class="empty" hidden>Nenhuma tag ainda. Crie a primeira acima.</p>
+  </section>
+
+  <svg hidden>
+    <symbol id="icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/>
+      <circle cx="7.5" cy="7.5" r="1.5"/>
+    </symbol>
+  </svg>
 
   <template id="todo-item-template">
     <li class="todo">
@@ -47,9 +78,22 @@
       <input type="checkbox" class="todo-check" aria-label="Concluir tarefa">
       <div class="todo-body">
         <span class="todo-text" title="Clique duas vezes para editar"></span>
+        <div class="todo-tags" hidden></div>
         <a class="todo-source" target="_blank" rel="noopener" hidden></a>
       </div>
-      <button type="button" class="todo-delete" title="Excluir" aria-label="Excluir tarefa">×</button>
+      <button type="button" class="todo-action todo-tag-toggle" title="Tags" aria-label="Escolher tags da tarefa">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><use href="#icon-tag"/></svg>
+      </button>
+      <button type="button" class="todo-action todo-delete" title="Excluir" aria-label="Excluir tarefa">×</button>
+    </li>
+  </template>
+
+  <template id="tag-item-template">
+    <li class="tag-item">
+      <span class="tag-badge"></span>
+      <span class="tag-usage"></span>
+      <button type="button" class="tag-edit button-link">Editar</button>
+      <button type="button" class="tag-delete button-link button-link-danger">Excluir</button>
     </li>
   </template>
 

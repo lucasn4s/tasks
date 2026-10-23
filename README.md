@@ -9,6 +9,7 @@ Extensão do Chrome para controlar as tarefas do dia de trabalho. As tarefas pod
 - **Menu de contexto**: "Adicionar … aos afazeres" com um texto selecionado.
 - **Reordenar arrastando** pela alça à esquerda de cada tarefa.
 - Concluir, editar (duplo clique) e excluir tarefas; barra de progresso do dia e contador de pendentes no ícone.
+- **Tags**: crie, edite (nome e cor) e exclua tags em "Gerenciar tags"; atribua pelo ícone de etiqueta de cada tarefa. As tags aparecem como badges na tarefa.
 - Tarefas concluídas em dias anteriores são limpas automaticamente; as pendentes continuam.
 
 ### Atalhos
@@ -28,4 +29,4 @@ Podem ser alterados em `chrome://extensions/shortcuts`.
 
 ## Privacidade
 
-As tarefas ficam apenas no `chrome.storage.local` do navegador; nada é enviado para fora. A extensão só acessa a aba atual quando você aciona o seletor de elementos (permissão `activeTab`).
+As tarefas e as tags ficam apenas no `chrome.storage.local` do navegador; nada é enviado para fora. A extensão só acessa a aba atual quando você aciona o seletor de elementos (permissão `activeTab`).

@@ -1,15 +1,20 @@
 import {
   addTodo,
   clearCompleted,
+  loadTags,
   loadTodos,
+  onTagsChanged,
   onTodosChanged,
   removeTodo,
   removeTodosCompletedBefore,
   renameTodo,
   reorderTodos,
   setTodoDone,
+  toggleTodoTag,
 } from './storage.js';
 import { startPicker } from './picker-launcher.js';
+import { renderTagBadge } from './tag-badge.js';
+import { focusTagForm, renderTagsView, resetTagForm, setUpTagsView } from './tags-view.js';
 
 const newTodoForm = document.querySelector('#new-todo-form');
 const newTodoInput = document.querySelector('#new-todo-text');
@@ -18,12 +23,18 @@ const errorMessage = document.querySelector('#error-message');
 const todoList = document.querySelector('#todo-list');
 const todoItemTemplate = document.querySelector('#todo-item-template');
 const emptyState = document.querySelector('#empty-state');
-const footer = document.querySelector('#footer');
 const clearCompletedButton = document.querySelector('#clear-completed');
 const todayLabel = document.querySelector('#today');
 const progressLabel = document.querySelector('#progress-label');
 const progressBar = document.querySelector('#progress-bar');
+const todosView = document.querySelector('#todos-view');
+const tagsView = document.querySelector('#tags-view');
+const openTagsButton = document.querySelector('#open-tags');
+const closeTagsButton = document.querySelector('#close-tags');
 
+let todos = [];
+let tags = [];
+let todoIdPickingTags = null;
 let draggedItem = null;
 
 init();
@@ -33,12 +44,23 @@ async function init() {
   newTodoForm.addEventListener('submit', onSubmitNewTodo);
   pickElementButton.addEventListener('click', onPickElement);
   clearCompletedButton.addEventListener('click', clearCompleted);
+  openTagsButton.addEventListener('click', openTagsView);
+  closeTagsButton.addEventListener('click', closeTagsView);
   todoList.addEventListener('dragover', onDragOver);
   todoList.addEventListener('drop', (event) => event.preventDefault());
-  onTodosChanged(render);
+  setUpTagsView();
+  onTodosChanged((changedTodos) => {
+    todos = changedTodos;
+    render();
+  });
+  onTagsChanged((changedTags) => {
+    tags = changedTags;
+    render();
+  });
 
   await removeTodosCompletedBefore(startOfToday());
-  render(await loadTodos());
+  [todos, tags] = await Promise.all([loadTodos(), loadTags()]);
+  render();
 }
 
 async function onSubmitNewTodo(event) {
@@ -62,15 +84,33 @@ async function onPickElement() {
   }
 }
 
-function render(todos) {
-  const pendingFirst = [...todos].sort((a, b) => Number(a.done) - Number(b.done));
-  todoList.replaceChildren(...pendingFirst.map(renderTodoItem));
-  renderProgress(todos);
-  emptyState.hidden = todos.length > 0;
-  footer.hidden = !todos.some((todo) => todo.done);
+function openTagsView() {
+  todosView.hidden = true;
+  tagsView.hidden = false;
+  focusTagForm();
 }
 
-function renderProgress(todos) {
+function closeTagsView() {
+  resetTagForm();
+  tagsView.hidden = true;
+  todosView.hidden = false;
+  newTodoInput.focus();
+}
+
+function render() {
+  renderTodos();
+  renderTagsView(tags, todos);
+}
+
+function renderTodos() {
+  const pendingFirst = [...todos].sort((a, b) => Number(a.done) - Number(b.done));
+  todoList.replaceChildren(...pendingFirst.map(renderTodoItem));
+  renderProgress();
+  emptyState.hidden = todos.length > 0;
+  clearCompletedButton.hidden = !todos.some((todo) => todo.done);
+}
+
+function renderProgress() {
   const doneCount = todos.filter((todo) => todo.done).length;
   progressLabel.textContent = todos.length ? `${doneCount} de ${todos.length} feitas` : '';
   progressBar.style.width = todos.length ? `${(doneCount / todos.length) * 100}%` : '0';
@@ -93,9 +133,46 @@ function renderTodoItem(todo) {
   text.textContent = todo.text;
   text.addEventListener('dblclick', () => startEditing(text, todo));
 
+  renderTodoTags(item.querySelector('.todo-tags'), todo);
+  const tagToggle = item.querySelector('.todo-tag-toggle');
+  tagToggle.classList.toggle('active', todo.id === todoIdPickingTags);
+  tagToggle.addEventListener('click', () => toggleTagPicker(todo.id));
+
   renderSource(item.querySelector('.todo-source'), todo.source);
   item.querySelector('.todo-delete').addEventListener('click', () => removeTodo(todo.id));
   return item;
+}
+
+function renderTodoTags(container, todo) {
+  const tagIds = todo.tagIds ?? [];
+  const badges = todo.id === todoIdPickingTags
+    ? [...tags.map((tag) => createTagOption(todo.id, tag, tagIds.includes(tag.id))), createManageTagsLink()]
+    : tags.filter((tag) => tagIds.includes(tag.id)).map((tag) => renderTagBadge(document.createElement('span'), tag));
+  container.replaceChildren(...badges);
+  container.hidden = !badges.length;
+}
+
+function createTagOption(todoId, tag, isAssigned) {
+  const option = renderTagBadge(document.createElement('button'), tag);
+  option.type = 'button';
+  option.classList.add('tag-option');
+  option.setAttribute('aria-pressed', String(isAssigned));
+  option.addEventListener('click', () => toggleTodoTag(todoId, tag.id));
+  return option;
+}
+
+function createManageTagsLink() {
+  const link = document.createElement('button');
+  link.type = 'button';
+  link.className = 'button-link';
+  link.textContent = tags.length ? 'Gerenciar tags' : 'Nenhuma tag ainda · criar tags';
+  link.addEventListener('click', openTagsView);
+  return link;
+}
+
+function toggleTagPicker(todoId) {
+  todoIdPickingTags = todoIdPickingTags === todoId ? null : todoId;
+  renderTodos();
 }
 
 function renderSource(link, source) {
@@ -140,7 +217,7 @@ async function finishDragging(event) {
   draggedItem.classList.remove('dragging');
   draggedItem = null;
   if (event.dataTransfer.dropEffect === 'none') {
-    render(await loadTodos());
+    renderTodos();
     return;
   }
   await reorderTodos([...todoList.children].map((item) => item.dataset.id));
