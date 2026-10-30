@@ -7,6 +7,7 @@
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --danger: #dc2626;
+  --popup-max-height: 600px;
   color-scheme: light dark;
 }
 
@@ -37,6 +38,14 @@ body {
 }
 
 button { font: inherit; cursor: pointer; }
+
+.todos-view {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(var(--popup-max-height) - 32px);
+}
+
+.todos-view > * { flex-shrink: 0; }
 
 .header {
   display: flex;
@@ -136,7 +145,8 @@ h1 { margin: 0; font-size: 17px; }
 .tag-filter .button-link { margin-left: 4px; font-size: 11px; }
 
 .todo-list {
-  max-height: 380px;
+  flex-shrink: 1;
+  min-height: 0;
   margin: 12px 0 0;
   padding: 0;
   list-style: none;
