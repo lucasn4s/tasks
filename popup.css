@@ -125,6 +125,16 @@ h1 { margin: 0; font-size: 17px; }
   font-size: 12px;
 }
 
+.tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.tag-filter .button-link { margin-left: 4px; font-size: 11px; }
+
 .todo-list {
   max-height: 380px;
   margin: 12px 0 0;

@@ -10,6 +10,7 @@ Extensão do Chrome para controlar as tarefas do dia de trabalho. As tarefas pod
 - **Reordenar arrastando** pela alça à esquerda de cada tarefa.
 - Concluir, editar (duplo clique) e excluir tarefas; barra de progresso do dia e contador de pendentes no ícone.
 - **Tags**: crie, edite (nome e cor) e exclua tags em "Gerenciar tags"; atribua pelo ícone de etiqueta de cada tarefa. As tags aparecem como badges na tarefa.
+- **Filtrar por tag**: clique nas tags acima da lista para mostrar só as tarefas que têm alguma delas. O filtro fica salvo entre aberturas do popup, e tarefas adicionadas com o filtro ativo já recebem as tags selecionadas.
 - Tarefas concluídas em dias anteriores são limpas automaticamente; as pendentes continuam.
 
 ### Atalhos

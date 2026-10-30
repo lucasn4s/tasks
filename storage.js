@@ -1,5 +1,6 @@
 const TODOS_KEY = 'todos';
 const TAGS_KEY = 'tags';
+const TAG_FILTER_KEY = 'tagFilter';
 
 let pendingWrite = Promise.resolve();
 
@@ -11,6 +12,14 @@ export function loadTags() {
   return loadList(TAGS_KEY);
 }
 
+export function loadTagFilter() {
+  return loadList(TAG_FILTER_KEY);
+}
+
+export function saveTagFilter(tagIds) {
+  return chrome.storage.local.set({ [TAG_FILTER_KEY]: tagIds });
+}
+
 export function onTodosChanged(callback) {
   onListChanged(TODOS_KEY, callback);
 }
@@ -19,7 +28,7 @@ export function onTagsChanged(callback) {
   onListChanged(TAGS_KEY, callback);
 }
 
-export function addTodo(text, source = null) {
+export function addTodo(text, source = null, tagIds = []) {
   const todo = {
     id: crypto.randomUUID(),
     text,
@@ -27,7 +36,7 @@ export function addTodo(text, source = null) {
     createdAt: Date.now(),
     completedAt: null,
     source,
-    tagIds: [],
+    tagIds,
   };
   return modifyTodos((todos) => [...todos, todo]);
 }

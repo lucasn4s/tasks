@@ -1,6 +1,7 @@
 import {
   addTodo,
   clearCompleted,
+  loadTagFilter,
   loadTags,
   loadTodos,
   onTagsChanged,
@@ -9,6 +10,7 @@ import {
   removeTodosCompletedBefore,
   renameTodo,
   reorderTodos,
+  saveTagFilter,
   setTodoDone,
   toggleTodoTag,
 } from './storage.js';
@@ -23,6 +25,8 @@ const errorMessage = document.querySelector('#error-message');
 const todoList = document.querySelector('#todo-list');
 const todoItemTemplate = document.querySelector('#todo-item-template');
 const emptyState = document.querySelector('#empty-state');
+const filteredEmptyState = document.querySelector('#filtered-empty-state');
+const tagFilter = document.querySelector('#tag-filter');
 const clearCompletedButton = document.querySelector('#clear-completed');
 const todayLabel = document.querySelector('#today');
 const progressLabel = document.querySelector('#progress-label');
@@ -34,6 +38,7 @@ const closeTagsButton = document.querySelector('#close-tags');
 
 let todos = [];
 let tags = [];
+let filterTagIds = [];
 let todoIdPickingTags = null;
 let draggedItem = null;
 
@@ -59,7 +64,7 @@ async function init() {
   });
 
   await removeTodosCompletedBefore(startOfToday());
-  [todos, tags] = await Promise.all([loadTodos(), loadTags()]);
+  [todos, tags, filterTagIds] = await Promise.all([loadTodos(), loadTags(), loadTagFilter()]);
   render();
 }
 
@@ -70,7 +75,7 @@ async function onSubmitNewTodo(event) {
     return;
   }
   newTodoInput.value = '';
-  await addTodo(text);
+  await addTodo(text, null, activeFilterTagIds());
 }
 
 async function onPickElement() {
@@ -98,8 +103,51 @@ function closeTagsView() {
 }
 
 function render() {
+  renderTagFilter();
   renderTodos();
   renderTagsView(tags, todos);
+}
+
+function renderTagFilter() {
+  const activeTagIds = activeFilterTagIds();
+  const options = tags.map((tag) => createTagToggle(tag, activeTagIds.includes(tag.id), () => toggleFilterTag(tag.id)));
+  if (activeTagIds.length) {
+    options.push(createClearFilterButton());
+  }
+  tagFilter.replaceChildren(...options);
+  tagFilter.hidden = !tags.length;
+}
+
+function createClearFilterButton() {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'button-link';
+  button.textContent = 'Limpar filtro';
+  button.addEventListener('click', () => setFilterTagIds([]));
+  return button;
+}
+
+function toggleFilterTag(tagId) {
+  const activeTagIds = activeFilterTagIds();
+  setFilterTagIds(activeTagIds.includes(tagId)
+    ? activeTagIds.filter((id) => id !== tagId)
+    : [...activeTagIds, tagId]);
+}
+
+function setFilterTagIds(tagIds) {
+  filterTagIds = tagIds;
+  saveTagFilter(tagIds);
+  renderTagFilter();
+  renderTodos();
+}
+
+function activeFilterTagIds() {
+  return filterTagIds.filter((tagId) => tags.some((tag) => tag.id === tagId));
+}
+
+function matchesFilter(todo) {
+  const activeTagIds = activeFilterTagIds();
+  return !activeTagIds.length || activeTagIds.some((tagId) => todo.tagIds?.includes(tagId));
 }
 
 function renderTodos() {
@@ -107,6 +155,7 @@ function renderTodos() {
   todoList.replaceChildren(...pendingFirst.map(renderTodoItem));
   renderProgress();
   emptyState.hidden = todos.length > 0;
+  filteredEmptyState.hidden = !todos.length || [...todoList.children].some((item) => !item.hidden);
   clearCompletedButton.hidden = !todos.some((todo) => todo.done);
 }
 
@@ -120,6 +169,7 @@ function renderTodoItem(todo) {
   const item = todoItemTemplate.content.firstElementChild.cloneNode(true);
   item.dataset.id = todo.id;
   item.classList.toggle('done', todo.done);
+  item.hidden = !matchesFilter(todo) && todo.id !== todoIdPickingTags;
 
   const handle = item.querySelector('.todo-handle');
   handle.addEventListener('dragstart', (event) => startDragging(event, item));
@@ -146,18 +196,18 @@ function renderTodoItem(todo) {
 function renderTodoTags(container, todo) {
   const tagIds = todo.tagIds ?? [];
   const badges = todo.id === todoIdPickingTags
-    ? [...tags.map((tag) => createTagOption(todo.id, tag, tagIds.includes(tag.id))), createManageTagsLink()]
+    ? [...tags.map((tag) => createTagToggle(tag, tagIds.includes(tag.id), () => toggleTodoTag(todo.id, tag.id))), createManageTagsLink()]
     : tags.filter((tag) => tagIds.includes(tag.id)).map((tag) => renderTagBadge(document.createElement('span'), tag));
   container.replaceChildren(...badges);
   container.hidden = !badges.length;
 }
 
-function createTagOption(todoId, tag, isAssigned) {
+function createTagToggle(tag, isPressed, onToggle) {
   const option = renderTagBadge(document.createElement('button'), tag);
   option.type = 'button';
   option.classList.add('tag-option');
-  option.setAttribute('aria-pressed', String(isAssigned));
-  option.addEventListener('click', () => toggleTodoTag(todoId, tag.id));
+  option.setAttribute('aria-pressed', String(isPressed));
+  option.addEventListener('click', onToggle);
   return option;
 }
 
@@ -200,7 +250,7 @@ function onDragOver(event) {
   event.dataTransfer.dropEffect = 'move';
 
   const sameGroupItems = [...todoList.children].filter(
-    (item) => item !== draggedItem && item.classList.contains('done') === draggedItem.classList.contains('done'),
+    (item) => item !== draggedItem && !item.hidden && item.classList.contains('done') === draggedItem.classList.contains('done'),
   );
   const itemBelowCursor = sameGroupItems.find((item) => {
     const rect = item.getBoundingClientRect();
